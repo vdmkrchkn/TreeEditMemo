@@ -11,7 +11,7 @@ class TreeModel : public QAbstractItemModel
  public:
      TreeModel(const QString &data, QObject *parent = 0);
      ~TreeModel();
-     // геттер для m_Items
+     // возвращает список элементов перечислимого типа
      const QStringList &getItemNames() const;
      // возвращает элемент данных, соответствующий модельному индексу <<index>>
      virtual QVariant data(const QModelIndex &index, int role) const;
@@ -21,17 +21,21 @@ class TreeModel : public QAbstractItemModel
      virtual Qt::ItemFlags flags(const QModelIndex &index) const;
      // возвращает данные заголовка
      virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
-     // возвращает модельный индекс узла <<row>> поля <<column>>
+     // создание модельного индекса для дочернего узла <<parent>>
      virtual QModelIndex index(int row, int column,
                        const QModelIndex &parent = QModelIndex()) const;
      virtual QModelIndex parent(const QModelIndex &index) const;
-     // возвращает количество строк в модели
+     // определение количества строк для текущего элемента
      virtual int rowCount(const QModelIndex &parent = QModelIndex()) const;
+     // определение количества столбцов для текущего элемента
      virtual int columnCount(const QModelIndex &parent = QModelIndex()) const;
 
- private:
-     void setupModelData_(const QStringList &lines, TreeItem *parent);
+ private:     
+     // инициализация данных
      void setupModelData(const QStringList &lines, TreeItem *parent);
+     // возвращает узел для текущего индекса
+     TreeItem *itemFromIndex(const QModelIndex &index) const;
+     // корень модели
      TreeItem *rootItem;     
      // список элементов перечислимого типа
      QStringList m_Items;

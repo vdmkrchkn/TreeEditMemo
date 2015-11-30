@@ -1,12 +1,9 @@
 #include "treemodel.h"
-#include <QtDebug>
 
-TreeModel::TreeModel(const QString &data, QObject *parent)
-     : QAbstractItemModel(parent)
+ TreeModel::TreeModel(const QString &data, QObject *parent)
+     : QAbstractItemModel(parent), rootItem(new TreeItem())
  {
-     this->rootItem = new TreeItem();
-     //
-     m_Items << QString("Unknown") << QString("Male") << QString("Female");     
+     m_Items << QString("Unknown") << QString("Male") << QString("Female");
      setupModelData(data.split(QString("\n")), this->rootItem);
  }
 
@@ -20,19 +17,15 @@ TreeModel::TreeModel(const QString &data, QObject *parent)
      return m_Items;
  }
 
- int TreeModel::columnCount(const QModelIndex &parent) const
- {
-     if (parent.isValid())
-         return static_cast<TreeItem*>(parent.internalPointer())->columnCount();
-     else
-         return rootItem->columnCount();
- }
-
  QVariant TreeModel::data(const QModelIndex &index, int role) const
  {
-    if (index.isValid() && index.row() < rowCount() && index.column() < columnCount())
+    if (index.isValid()
+            && index.row() < rowCount(parent(index))
+            && index.column() < columnCount(parent(index)))
     {
-        TreeItem *item = static_cast<TreeItem*>(index.internalPointer());
+        TreeItem *item = itemFromIndex(index);
+        if(!item)
+            return QVariant();
         const Person &rcData = item->getPerson();
         switch (role)
         {
@@ -64,13 +57,15 @@ TreeModel::TreeModel(const QString &data, QObject *parent)
     return QVariant();
  }
 
-bool TreeModel::setData(const QModelIndex &index, const QVariant &value, int role)
+ bool TreeModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
     if (index.isValid()
-            && index.row() < rowCount() && index.column() < columnCount()
-            && (role == Qt::DisplayRole || role == Qt::EditRole || role == Qt::CheckStateRole))
+            && index.row() < rowCount(parent(index))
+            && index.column() < columnCount(parent(index)))
     {
-        TreeItem *item = static_cast<TreeItem*>(index.internalPointer());
+        TreeItem *item = itemFromIndex(index);
+        if(!item)
+            return false;
         Person &rData = item->getPerson();
         switch (role)
         {
@@ -100,6 +95,8 @@ bool TreeModel::setData(const QModelIndex &index, const QVariant &value, int rol
               default:
                 return false;
             }
+        default:
+            return false;
         }
         //
         emit dataChanged(index, index);
@@ -126,7 +123,7 @@ bool TreeModel::setData(const QModelIndex &index, const QVariant &value, int rol
  }
 
  QVariant TreeModel::headerData(int section, Qt::Orientation orientation, int role) const
- {                 
+ {
      if (orientation == Qt::Horizontal && role == Qt::DisplayRole)
          switch (section)
          {
@@ -138,24 +135,19 @@ bool TreeModel::setData(const QModelIndex &index, const QVariant &value, int rol
              return QString("Married");
            case 3:
              return QString("Sex");
-         }         
+         }
      //
      return QAbstractItemModel::headerData(section, orientation, role);
  }
 
  QModelIndex TreeModel::index(int row, int column, const QModelIndex &parent)
              const
- {    
+ {
      if (!hasIndex(row, column, parent))
          return QModelIndex();
-     //
-     TreeItem *parentItem;
-     // для корневого узла предок не определен
-     if (!parent.isValid())
-         parentItem = rootItem;
-     else
-         parentItem = static_cast<TreeItem*>(parent.internalPointer());
-     //
+     // получение узла-предка
+     TreeItem *parentItem = itemFromIndex(parent);
+     // получение текущего узла
      TreeItem *childItem = parentItem->child(row);
      if (childItem)
          return createIndex(row, column, childItem);
@@ -167,39 +159,43 @@ bool TreeModel::setData(const QModelIndex &index, const QVariant &value, int rol
  {
      if (!index.isValid())
          return QModelIndex();
-
-     TreeItem *childItem = static_cast<TreeItem*>(index.internalPointer());
-     TreeItem *parentItem = childItem->parent();
-
-     if (parentItem == rootItem)
+     //
+     TreeItem *childItem = itemFromIndex(index);
+     if(!childItem)
          return QModelIndex();
-
+     //
+     TreeItem *parentItem = childItem->parent();
+     if(!parentItem || parentItem == rootItem)
+         return QModelIndex();
+     //
      return createIndex(parentItem->row(), 0, parentItem);
  }
 
  int TreeModel::rowCount(const QModelIndex &parent) const
  {
-     TreeItem *parentItem;
-     if (parent.column() > 0)
+     if (parent.column() > 0)   // ???
          return 0;
-     //
-     if (!parent.isValid())
-         parentItem = rootItem;
-     else
-         parentItem = static_cast<TreeItem*>(parent.internalPointer());
-     //
-     return parentItem->childCount();
+     TreeItem *parentItem = itemFromIndex(parent);
+     if(!parentItem)
+         return 0;
+     return parentItem->childCount();   // число дочерних элементов
+ }
+
+ int TreeModel::columnCount(const QModelIndex &parent) const
+ {
+     TreeItem* parentItem = itemFromIndex(parent);
+     return parentItem->columnCount();
  }
 
  void TreeModel::setupModelData(const QStringList &lines, TreeItem *parent)
- {     
+ {
      QList<TreeItem*> parents;
      QList<int> indentations;
      parents << parent;
      indentations << 0;
      // цикл по строкам
      foreach (QString line, lines)
-     {         
+     {
          int position = 0;  // позиция 1-го непробельного символа в line
          while (position < line.length())
          {
@@ -239,7 +235,18 @@ bool TreeModel::setData(const QModelIndex &index, const QVariant &value, int rol
                      indentations.pop_back();
                  }
              }
+             // Append a new item to the current parent's list of children.
              parents.last()->appendChild(new TreeItem(curItem, parents.last()));
          }
      }
+ }
+
+ TreeItem *TreeModel::itemFromIndex(const QModelIndex &index) const
+ {
+     // для корневого узла индексом является корень модели
+     if (!index.isValid())
+         return rootItem;
+     else
+         // получаем указатель с помощью встроенного метода
+         return static_cast<TreeItem*>(index.internalPointer());
  }
