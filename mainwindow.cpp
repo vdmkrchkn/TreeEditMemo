@@ -83,10 +83,10 @@ void MainWindow::updateActions()
 
 void MainWindow::closeSubWindow()
 {
-    QMdiSubWindow *subWindow = qobject_cast<QMdiSubWindow *>(sender());
+    EditorSubWindow *subWindow = qobject_cast<EditorSubWindow *>(sender());
     if(subWindow)
     {
-        int idx = curOpenFiles.indexOf(subWindow->accessibleName());
+        int idx = curOpenFiles.indexOf(subWindow->m_Name);
         if(idx >= 0)
         {
             curOpenFiles.removeAt(idx);
@@ -166,12 +166,12 @@ bool MainWindow::loadFile(const QString &filename)
     subTreeView->setAcceptDrops(true);
     subTreeView->setDropIndicatorShown(true);
     //
-    QMdiSubWindow *subWindow = mdiArea->addSubWindow(subTreeView);
-    subWindow->setAccessibleName(strippedFileName(filename));
-//    TreeEditor *editor = new TreeEditor(strippedFileName(filename),subWindow);
+    QString documentName = strippedFileName(filename);
+//    EditorSubWindow *editor = new EditorSubWindow(documentName,subTreeView);
 //    connect(editor,SIGNAL(closed(QString)),this,SLOT(closeSubWindow()));
+    QMdiSubWindow *subWindow = mdiArea->addSubWindow(subTreeView);
+    subWindow->setAccessibleName(documentName);
     subWindow->show();
-    //editor->show();
     return true;
 }
 
@@ -234,8 +234,8 @@ void MainWindow::updateRecentFileActions()
     separatorFileAction->setVisible(!recentFiles.empty());
 }
 
-TreeEditor::TreeEditor(const QString &name, QMdiSubWindow *parent)
- : QMdiSubWindow(parent), eName(name)
+EditorSubWindow::EditorSubWindow(const QString &name, QWidget *parent)
+ : QWidget(parent), m_Name(name)
 {
     this->eAction = new QAction(this);
     this->eAction->setCheckable(true);
@@ -243,8 +243,8 @@ TreeEditor::TreeEditor(const QString &name, QMdiSubWindow *parent)
     setAttribute(Qt::WA_DeleteOnClose);
 }
 
-void TreeEditor::closeEvent(QCloseEvent *closeEvent)
+void EditorSubWindow::closeEvent(QCloseEvent *closeEvent)
 {
-    emit closed(this->objectName());
+    emit closed(m_Name/*this->objectName()*/);
     closeEvent->accept();
 }

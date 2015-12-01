@@ -51,12 +51,12 @@ private:
     void updateRecentFileActions();
 };
 
-class TreeEditor : public QMdiSubWindow
+class EditorSubWindow : public QWidget
 {
     Q_OBJECT
 public:
-    TreeEditor(const QString &name, QMdiSubWindow *parent = 0);
-    QString eName;
+    EditorSubWindow(const QString &name, QWidget *parent = 0);
+    QString m_Name;
 signals:
     void closed(const QString&);
 protected:

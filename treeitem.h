@@ -11,7 +11,8 @@ struct Person
     bool isMarried;
     int sex;
     //
-    Person(const QString &rcName = QString(),int nValue = 0,bool bEnabled = false,int nVariant = 0);
+    Person(const QString &rcName = QString(),int nValue = 0,bool bEnabled = false
+            ,int nVariant = 0);
 };
 
 class TreeItem
@@ -22,27 +23,21 @@ public:
     // добавление дочернего узла
     void appendChild(TreeItem *child);
     // поиск дочернего узла с индексом row
-    TreeItem *child(int row);
+    TreeItem *child(int row) const;
     // возвращает число дочерних узлов
     int childCount() const;
     // возвращает число полей узла
-    int columnCount() const;
-    // возвращает поле узла с индексом column
-    QVariant data(int column) const;
+    int columnCount() const;    
     // определение позиции узла относительно родительского узла
     int row() const;
     // возвращает указатель на родительский узел
-    TreeItem *parent();
-    //
-    Person &getPerson()
-    {
-        return this->person;
-    }
-    // реализовать setData    
+    TreeItem *parent() const;
+    // возвращает данные узла
+    Person &getPerson() { return this->person; }
 private:            
     QList<TreeItem*> childItems; // список указателей на дочерние узлы
-    TreeItem *parentItem;        // указатель на родительский узел    
     Person person;               // данные узла
+    TreeItem *parentItem;        // указатель на родительский узел        
 };
 
 #endif // TREEITEM_H

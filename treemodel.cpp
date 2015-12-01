@@ -46,11 +46,8 @@
                     return rcData.sex;
               }
             case Qt::CheckStateRole:
-              switch (index.column())
-              {
-                case 2:
+              if (index.column() == 2)
                   return rcData.isMarried ? Qt::Checked : Qt::Unchecked;
-              }
         }
     }
     //

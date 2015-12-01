@@ -40,7 +40,7 @@ void ComboDelegate::setModelData(QWidget *pEditor,QAbstractItemModel *pModel,con
 void ComboDelegate::updateEditorGeometry(
   QWidget *pEditor,
   const QStyleOptionViewItem &rcOption,
-  const QModelIndex &rcIndex) const
+  const QModelIndex &) const
 {
   pEditor->setGeometry(rcOption.rect);
 }

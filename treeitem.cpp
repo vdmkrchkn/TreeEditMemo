@@ -4,10 +4,7 @@ Person::Person(const QString &rcName, int nValue, bool bEnabled, int nVariant)
     : name(rcName), age(nValue), isMarried(bEnabled), sex(nVariant){}
 
 TreeItem::TreeItem(const Person &p, TreeItem *parent)
-{
-    this->person = p;    
-    this->parentItem = parent;
-}
+    : person(p),parentItem(parent){}
 
 TreeItem::~TreeItem()
 {
@@ -19,7 +16,7 @@ void TreeItem::appendChild(TreeItem *child)
     this->childItems.append(child);
 }
 
-TreeItem *TreeItem::child(int row)
+TreeItem *TreeItem::child(int row) const
 {
     return this->childItems.value(row);
 }
@@ -34,22 +31,6 @@ int TreeItem::columnCount() const
     return 4;
 }
 
-QVariant TreeItem::data(int column) const
-{
-    switch (column) {
-    case 0:
-        return this->person.name;
-    case 1:
-        return this->person.age;
-    case 2:
-        return this->person.isMarried;
-    case 3:
-        return this->person.sex;
-    default:
-        return QVariant();
-    }
-}
-
 int TreeItem::row() const
 {
      if (this->parentItem)
@@ -58,7 +39,7 @@ int TreeItem::row() const
         return 0;
 }
 
-TreeItem *TreeItem::parent()
+TreeItem *TreeItem::parent() const
 {
     return this->parentItem;
 }
