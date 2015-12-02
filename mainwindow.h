@@ -21,7 +21,7 @@ private slots:
     void openRecentFile();
     void onActionAboutActivated();
     void updateActions();
-    void closeSubWindow();
+    void closeSubWindow(QMdiSubWindow *subWindow);
     void closeCurSubWindow();
     void closeAllSubWindows();
 private:
@@ -44,13 +44,13 @@ private:
     // сохранение файла данных
     bool saveFile(const QString &filename);
     // действия, совершаемые при открытии файла
-    void setCurrentFile(const QString &filename);
-    // возвращает имя файла без полного пути
-    QString strippedFileName(const QString &filename);
+    void setCurrentFile(const QString &filename);       
     // обновляет меню File
     void updateRecentFileActions();
+    //
+    bool eventFilter(QObject *target, QEvent *event);
 };
-
+/* рабочее окружение документа
 class EditorSubWindow : public QWidget
 {
     Q_OBJECT
@@ -64,5 +64,5 @@ protected:
 private:
     QAction *eAction;
 };
-
+*/
 #endif // MAINWINDOW_H

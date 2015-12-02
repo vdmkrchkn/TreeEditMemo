@@ -3,6 +3,16 @@
 #include "combo-delegate.h"
 #include "treemodel.h"
 #include "about_dialog.h"
+//#include "modeltest.h"
+
+namespace
+{
+    // возвращает имя файла без полного пути
+    QString strippedFileName(const QString &rcFullFileName)
+    {
+        return QFileInfo(rcFullFileName).fileName();
+    }
+}
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -12,8 +22,7 @@ MainWindow::MainWindow(QWidget *parent) :
     mdiArea = new QMdiArea;
     setCentralWidget(mdiArea);    
     //
-    connect(mdiArea,SIGNAL(subWindowActivated(QMdiSubWindow*)),this,SLOT(updateActions()));
-    //connect(mdiArea,SIGNAL(destroyed())
+    connect(mdiArea,SIGNAL(subWindowActivated(QMdiSubWindow*)),this,SLOT(updateActions()));    
     // обработка нажатия Файл->Открыть
     connect(ui->action_Open, SIGNAL(triggered()), this, SLOT(onActionOpenTriggered()));
     // создание динамического меню последних открывавшихся файлов
@@ -81,22 +90,22 @@ void MainWindow::updateActions()
     ui->action_Close_All->setVisible(!curOpenFiles.empty());
 }
 
-void MainWindow::closeSubWindow()
+void MainWindow::closeSubWindow(QMdiSubWindow *subWindow)
 {
-    EditorSubWindow *subWindow = qobject_cast<EditorSubWindow *>(sender());
-    if(subWindow)
+//    EditorSubWindow *subWindow = qobject_cast<EditorSubWindow *>(sender());
+//    if(subWindow){}
+    int idx = mdiArea->subWindowList().indexOf(subWindow);
+    if(idx >= 0)
     {
-        int idx = curOpenFiles.indexOf(subWindow->m_Name);
-        if(idx >= 0)
-        {
-            curOpenFiles.removeAt(idx);
+        curOpenFiles.removeAt(idx);
+        if(idx < curOpenFilesActions.size()){
             curOpenFilesActions[idx]->setVisible(false);
             curOpenFilesActions.removeAt(idx);
         }
         //
-        separatorWindowAction->setVisible(!curOpenFiles.empty());
-        //
         subWindow->close();
+        //
+        separatorWindowAction->setVisible(!curOpenFiles.empty());
     }
 }
 
@@ -151,6 +160,8 @@ bool MainWindow::loadFile(const QString &filename)
     // создание модели
     TreeModel *m_pTreeModel = new TreeModel(file.readAll());
     file.close();
+    // тестирование модели
+//    new ModelTest(m_pTreeModel,this);
     //
     setCurrentFile(filename);    
     // создание представления
@@ -166,19 +177,14 @@ bool MainWindow::loadFile(const QString &filename)
     subTreeView->setAcceptDrops(true);
     subTreeView->setDropIndicatorShown(true);
     //
-    QString documentName = strippedFileName(filename);
 //    EditorSubWindow *editor = new EditorSubWindow(documentName,subTreeView);
 //    connect(editor,SIGNAL(closed(QString)),this,SLOT(closeSubWindow()));
     QMdiSubWindow *subWindow = mdiArea->addSubWindow(subTreeView);
-    subWindow->setAccessibleName(documentName);
+    subWindow->setAccessibleName(strippedFileName(filename));
+    subWindow->installEventFilter(this);
     subWindow->show();
+    //
     return true;
-}
-
-bool MainWindow::saveFile(const QString &filename)
-{
-    //setCurrentFile(filename);
-    return !filename.isEmpty();
 }
 
 void MainWindow::setCurrentFile(const QString &filename)
@@ -205,11 +211,6 @@ void MainWindow::setCurrentFile(const QString &filename)
     }    
 }
 
-QString MainWindow::strippedFileName(const QString &filename)
-{
-    return QFileInfo(filename).fileName();
-}
-
 void MainWindow::updateRecentFileActions()
 {
     // удаление несуществующих файлов
@@ -234,6 +235,16 @@ void MainWindow::updateRecentFileActions()
     separatorFileAction->setVisible(!recentFiles.empty());
 }
 
+bool MainWindow::eventFilter(QObject *target, QEvent *event)
+{
+    if(event->type() == QEvent::Close){
+        QMdiSubWindow *subWindow = qobject_cast<QMdiSubWindow*>(target);
+        if(subWindow)
+            closeSubWindow(subWindow);
+    }
+    return QObject::eventFilter(target,event);
+}
+/*
 EditorSubWindow::EditorSubWindow(const QString &name, QWidget *parent)
  : QWidget(parent), m_Name(name)
 {
@@ -245,6 +256,7 @@ EditorSubWindow::EditorSubWindow(const QString &name, QWidget *parent)
 
 void EditorSubWindow::closeEvent(QCloseEvent *closeEvent)
 {
-    emit closed(m_Name/*this->objectName()*/);
+    emit closed(m_Name);
     closeEvent->accept();
 }
+*/
