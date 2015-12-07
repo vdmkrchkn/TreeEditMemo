@@ -3,7 +3,10 @@
 #include "combo-delegate.h"
 #include "treemodel.h"
 #include "about_dialog.h"
-//#include "modeltest.h"
+
+#ifdef MODEL_TEST
+#include "modeltest.h"
+#endif
 
 namespace
 {
@@ -67,8 +70,9 @@ void MainWindow::closeEvent(QCloseEvent *event)
 void MainWindow::onActionOpenTriggered()
 {
     // диалоговое окно выбора файла данных
-    QString filename = QFileDialog::getOpenFileName(this,tr("Open data file"),"../TreeEditMemo",
-                                                    QString("Family files (*.fm)"));
+    QString filename = QFileDialog::getOpenFileName(this,tr("Open data file"),
+                                                "../../TreeEditMemo/families",
+                                                QString("Family files (*.fm)"));
     if(!filename.isEmpty())    
         loadFile(filename);
 }
@@ -161,7 +165,9 @@ bool MainWindow::loadFile(const QString &filename)
     TreeModel *m_pTreeModel = new TreeModel(file.readAll());
     file.close();
     // тестирование модели
-//    new ModelTest(m_pTreeModel,this);
+#ifdef MODEL_TEST
+    (void) new ModelTest(m_pTreeModel,this);
+#endif
     //
     setCurrentFile(filename);    
     // создание представления
@@ -171,10 +177,11 @@ bool MainWindow::loadFile(const QString &filename)
     ComboDelegate *pDelegate = new ComboDelegate(m_pTreeModel);
     subTreeView->setItemDelegateForColumn(3,pDelegate);
     //
-    subTreeView->setSelectionBehavior(QAbstractItemView::SelectRows);
+//    subTreeView->setSelectionBehavior(QAbstractItemView::SelectRows);
     subTreeView->setSelectionMode(QAbstractItemView::ExtendedSelection);
-    subTreeView->setDragEnabled(true);
-    subTreeView->setAcceptDrops(true);
+    subTreeView->setAllColumnsShowFocus(true);
+    // перемещение внутри дерева
+    subTreeView->setDragDropMode(QAbstractItemView::InternalMove);
     subTreeView->setDropIndicatorShown(true);
     //
 //    EditorSubWindow *editor = new EditorSubWindow(documentName,subTreeView);

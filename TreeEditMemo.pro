@@ -10,7 +10,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = TreeEditMemo
 TEMPLATE = app
-
+CONFIG += debug
 
 SOURCES += main.cpp\
         mainwindow.cpp \
@@ -29,6 +29,11 @@ FORMS    += mainwindow.ui \
     about_dialog.ui
 
 OTHER_FILES +=
+
+exists(../ModelTest/modeltest.pri){
+	DEFINES += MODEL_TEST
+	include(../ModelTest/modeltest.pri)
+}
 
 RESOURCES += \
     TreeEditMemo.qrc
