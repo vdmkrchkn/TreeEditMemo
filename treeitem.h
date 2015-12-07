@@ -21,9 +21,11 @@ public:
     TreeItem(const Person &p = Person(), TreeItem *parent = 0);
     ~TreeItem();
     // добавление дочернего узла
-    void appendChild(TreeItem *child);
+    void appendChild(TreeItem *childAt);
+    // удаление дочернего узла с индексом row
+    TreeItem *removeChild(int row);
     // поиск дочернего узла с индексом row
-    TreeItem *child(int row) const;
+    TreeItem *childAt(int row) const;
     // возвращает число дочерних узлов
     int childCount() const;
     // возвращает число полей узла

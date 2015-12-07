@@ -16,7 +16,15 @@ void TreeItem::appendChild(TreeItem *child)
     this->childItems.append(child);
 }
 
-TreeItem *TreeItem::child(int row) const
+TreeItem *TreeItem::removeChild(int row)
+{
+    TreeItem *item = childAt(row);
+    item->parentItem = 0;
+    this->childItems.removeAt(row);
+    return item;
+}
+
+TreeItem *TreeItem::childAt(int row) const
 {
     return this->childItems.value(row);
 }

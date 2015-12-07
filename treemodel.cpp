@@ -1,7 +1,9 @@
 #include "treemodel.h"
+#include <QMimeData>
 
  TreeModel::TreeModel(const QString &data, QObject *parent)
-     : QAbstractItemModel(parent), rootItem(new TreeItem())
+     : QAbstractItemModel(parent), rootItem(new TreeItem()),
+       m_MimeType("application/vnd.text.list")
  {
      m_Items << QString("Unknown") << QString("Male") << QString("Female");
      setupModelData(data.split(QString("\n")), this->rootItem);
@@ -119,6 +121,77 @@
      return nReturn;
  }
 
+ Qt::DropActions TreeModel::supportedDropActions() const
+ {
+     return Qt::CopyAction | Qt::MoveAction;
+ }
+
+ QStringList TreeModel::mimeTypes() const
+ {         
+    return QStringList() << m_MimeType;
+ }
+
+ QMimeData *TreeModel::mimeData(const QModelIndexList &indexes) const
+ {
+    QMimeData *mimeData = new QMimeData();
+    QByteArray encodedData;
+    QDataStream stream(&encodedData, QIODevice::WriteOnly);
+    foreach (const QModelIndex &index, indexes) {
+        if (index.isValid()) {
+            QString text = data(index, Qt::DisplayRole).toString();
+            stream << text;
+        }
+    }
+    mimeData->setData(m_MimeType, encodedData);
+    return mimeData;
+ }
+
+ bool TreeModel::dropMimeData(const QMimeData *data, Qt::DropAction action,
+                              int row, int column, const QModelIndex &parent)
+ {
+    if (action == Qt::IgnoreAction)
+        return true;
+    //
+    if (!data || !data->hasFormat(m_MimeType) || column > 0)
+        return false;
+    //
+    TreeItem *parentItem = itemFromIndex(parent);
+    if (!parentItem)
+        return false;
+    // десериализация переносимых данных
+    QByteArray encodedData = data->data(m_MimeType);
+    QDataStream stream(&encodedData, QIODevice::ReadOnly);
+    QList<Person> personItems;
+    while (!stream.atEnd()) {
+        QString data[4];
+        for(int i = 0; i < 4; ++i)
+            stream >> data[i];
+        personItems << Person(data[0],
+                data[1].toInt(),data[2].toInt(),data[3].toInt());
+    }
+    //
+    int beginRow = 0;
+    if (row != -1)
+        // drop перед элементом <<row>>
+        beginRow = row;
+    else if (parent.isValid())
+        // drop в дочерние <<parent>>
+        beginRow = parent.row();
+    else
+        beginRow = rootItem->childCount();
+    // вставка в соответствующий индекс
+    beginInsertRows(parent,beginRow,beginRow + personItems.count() - 1);
+//    insertRows(beginRow, rows, parent);
+    foreach (const Person &rcPerson, personItems) {
+        parentItem->appendChild(new TreeItem(rcPerson, parentItem));
+//        QModelIndex idx = index(beginRow, 0, parent);
+//        setData(idx, text);
+//        beginRow++;
+    }
+    endInsertRows();
+    return true;
+ }
+
  QVariant TreeModel::headerData(int section, Qt::Orientation orientation, int role) const
  {
      if (orientation == Qt::Horizontal && role == Qt::DisplayRole)
@@ -145,7 +218,7 @@
      // получение узла-предка
      TreeItem *parentItem = itemFromIndex(parent);
      // получение текущего узла
-     TreeItem *childItem = parentItem->child(row);
+     TreeItem *childItem = parentItem->childAt(row);
      if (childItem)
          return createIndex(row, column, childItem);
      else
@@ -170,7 +243,7 @@
 
  int TreeModel::rowCount(const QModelIndex &parent) const
  {
-     if (parent.column() > 0)   // ???
+     if (parent.column() > 0)
          return 0;
      TreeItem *parentItem = itemFromIndex(parent);
      if(!parentItem)
@@ -182,6 +255,16 @@
  {
      TreeItem* parentItem = itemFromIndex(parent);
      return parentItem->columnCount();
+ }
+
+ bool TreeModel::removeRows(int row, int count, const QModelIndex &parent)
+ {
+     TreeItem* parentItem = itemFromIndex(parent);
+     beginRemoveRows(parent,row,row + count - 1);
+     for(int i = 0; i < count; ++i)
+        delete parentItem->removeChild(row);
+     endRemoveRows();
+     return true;
  }
 
  void TreeModel::setupModelData(const QStringList &lines, TreeItem *parent)
@@ -220,7 +303,7 @@
                  // unless the current parent has no children.
                  if (parents.last()->childCount() > 0)
                  {
-                     parents << parents.last()->child(parents.last()->childCount()-1);
+                     parents << parents.last()->childAt(parents.last()->childCount()-1);
                      indentations << position;
                  }
              }
