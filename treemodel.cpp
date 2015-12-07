@@ -137,10 +137,8 @@
     QByteArray encodedData;
     QDataStream stream(&encodedData, QIODevice::WriteOnly);
     foreach (const QModelIndex &index, indexes) {
-        if (index.isValid()) {
-            QString text = data(index, Qt::DisplayRole).toString();
-            stream << text;
-        }
+        if (index.isValid())
+                stream << data(index, Qt::DisplayRole);
     }
     mimeData->setData(m_MimeType, encodedData);
     return mimeData;
@@ -163,11 +161,11 @@
     QDataStream stream(&encodedData, QIODevice::ReadOnly);
     QList<Person> personItems;
     while (!stream.atEnd()) {
-        QString data[4];
+        QVariant data[4];
         for(int i = 0; i < 4; ++i)
             stream >> data[i];
-        personItems << Person(data[0],
-                data[1].toInt(),data[2].toInt(),data[3].toInt());
+        personItems << Person(data[0].toString(), data[1].toInt(),
+                              data[2].toBool(),m_Items.indexOf(data[3].toString()));
     }
     //
     int beginRow = 0;
@@ -181,12 +179,8 @@
         beginRow = rootItem->childCount();
     // вставка в соответствующий индекс
     beginInsertRows(parent,beginRow,beginRow + personItems.count() - 1);
-//    insertRows(beginRow, rows, parent);
     foreach (const Person &rcPerson, personItems) {
         parentItem->appendChild(new TreeItem(rcPerson, parentItem));
-//        QModelIndex idx = index(beginRow, 0, parent);
-//        setData(idx, text);
-//        beginRow++;
     }
     endInsertRows();
     return true;
