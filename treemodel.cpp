@@ -123,7 +123,7 @@
 
  Qt::DropActions TreeModel::supportedDropActions() const
  {
-     return Qt::CopyAction | Qt::MoveAction;
+     return Qt::MoveAction;
  }
 
  QStringList TreeModel::mimeTypes() const
@@ -180,7 +180,8 @@
     // вставка в соответствующий индекс
     beginInsertRows(parent,beginRow,beginRow + personItems.count() - 1);
     foreach (const Person &rcPerson, personItems) {
-        parentItem->appendChild(new TreeItem(rcPerson, parentItem));
+        parentItem->addChild(new TreeItem(rcPerson),beginRow);
+        ++beginRow;
     }
     endInsertRows();
     return true;
@@ -251,6 +252,17 @@
      return parentItem->columnCount();
  }
 
+ bool TreeModel::insertRows(int row, int count, const QModelIndex &parent)
+ {
+     TreeItem* parentItem = itemFromIndex(parent);
+     beginInsertRows(parent,row,row + count - 1);
+     for(int i = 0; i < count; ++i)
+         // добавление элемента по-умолчанию
+         parentItem->addChild(new TreeItem(),row);
+     endInsertRows();
+     return true;
+ }
+
  bool TreeModel::removeRows(int row, int count, const QModelIndex &parent)
  {
      TreeItem* parentItem = itemFromIndex(parent);
@@ -309,8 +321,8 @@
                      indentations.pop_back();
                  }
              }
-             // Append a new item to the current parent's list of children.
-             parents.last()->appendChild(new TreeItem(curItem, parents.last()));
+             // добавление элемента в дочерние последнего предка.
+             parents.last()->addChild(new TreeItem(curItem));
          }
      }
  }

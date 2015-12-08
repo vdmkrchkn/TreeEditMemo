@@ -42,6 +42,8 @@ class TreeModel : public QAbstractItemModel
      virtual int rowCount(const QModelIndex &parent) const;
      // определение количества столбцов для текущего элемента
      virtual int columnCount(const QModelIndex &parent) const;
+     // вставка элементов
+     virtual bool insertRows(int row, int count, const QModelIndex &parent = QModelIndex());
      // удаление элементов
      virtual bool removeRows(int row, int count,
                              const QModelIndex &parent = QModelIndex());
