@@ -20,11 +20,11 @@ class TreeItem
 public:
     TreeItem(const Person &p = Person(), TreeItem *parent = 0);
     ~TreeItem();
-    // добавление дочернего узла
-    void appendChild(TreeItem *childAt);
-    // удаление дочернего узла с индексом row
+    // добавление дочернего узла в позицию `row`. В случае -1 добавляется в конец
+    void addChild(TreeItem *child, int row = -1);
+    // удаление дочернего узла с индексом `row`
     TreeItem *removeChild(int row);
-    // поиск дочернего узла с индексом row
+    // поиск дочернего узла с индексом `row`
     TreeItem *childAt(int row) const;
     // возвращает число дочерних узлов
     int childCount() const;

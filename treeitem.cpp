@@ -11,9 +11,10 @@ TreeItem::~TreeItem()
     qDeleteAll(this->childItems);
 }
 
-void TreeItem::appendChild(TreeItem *child)
+void TreeItem::addChild(TreeItem *child, int row)
 {
-    this->childItems.append(child);
+    child->parentItem = this;
+    this->childItems.insert(row == -1 ? this->childCount() : row, child);
 }
 
 TreeItem *TreeItem::removeChild(int row)
