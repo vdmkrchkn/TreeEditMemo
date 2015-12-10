@@ -178,7 +178,7 @@ bool MainWindow::loadFile(const QString &filename)
     subTreeView->setItemDelegateForColumn(3,pDelegate);
     //
 //    subTreeView->setSelectionBehavior(QAbstractItemView::SelectRows);
-    subTreeView->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    subTreeView->setSelectionMode(QAbstractItemView::SingleSelection);
     subTreeView->setAllColumnsShowFocus(true);
     // перемещение внутри дерева
     subTreeView->setDragDropMode(QAbstractItemView::InternalMove);

@@ -15,6 +15,9 @@ struct Person
             ,int nVariant = 0);
 };
 
+class QXmlStreamWriter;
+class QXmlStreamReader;
+
 class TreeItem
 {
 public:
@@ -36,6 +39,10 @@ public:
     TreeItem *parent() const;
     // возвращает данные узла
     Person &getPerson() { return this->person; }
+    //
+    static void serialize(QXmlStreamWriter *writer, TreeItem *item);
+    static void deserialize(QXmlStreamReader *reader, TreeItem *item,
+                            const int &row);
 private:            
     QList<TreeItem*> childItems; // список указателей на дочерние узлы
     Person person;               // данные узла

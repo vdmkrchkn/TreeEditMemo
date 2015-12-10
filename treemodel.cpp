@@ -1,5 +1,7 @@
 #include "treemodel.h"
 #include <QMimeData>
+#include <QXmlStreamWriter>
+#include <QXmlStreamReader>
 
  TreeModel::TreeModel(const QString &data, QObject *parent)
      : QAbstractItemModel(parent), rootItem(new TreeItem()),
@@ -133,56 +135,39 @@
 
  QMimeData *TreeModel::mimeData(const QModelIndexList &indexes) const
  {
-    QMimeData *mimeData = new QMimeData();
+    Q_ASSERT(!indexes.isEmpty());  // данные должны быть
+    TreeItem *item = itemFromIndex(indexes.first());
+    if(!item)
+        return 0;
+    QMimeData *mimeData = new QMimeData;
     QByteArray encodedData;
-    QDataStream stream(&encodedData, QIODevice::WriteOnly);
-    foreach (const QModelIndex &index, indexes) {
-        if (index.isValid())
-                stream << data(index, Qt::DisplayRole);
-    }
+    QXmlStreamWriter writer(&encodedData);
+    TreeItem::serialize(&writer,item);
     mimeData->setData(m_MimeType, encodedData);
     return mimeData;
  }
 
- bool TreeModel::dropMimeData(const QMimeData *data, Qt::DropAction action,
+ bool TreeModel::dropMimeData(const QMimeData *mimeData, Qt::DropAction action,
                               int row, int column, const QModelIndex &parent)
  {
     if (action == Qt::IgnoreAction)
         return true;
     //
-    if (!data || !data->hasFormat(m_MimeType) || column > 0)
+    if (!mimeData || !mimeData->hasFormat(m_MimeType) || column > 0)
         return false;
     //
     TreeItem *parentItem = itemFromIndex(parent);
     if (!parentItem)
         return false;
     // десериализация переносимых данных
-    QByteArray encodedData = data->data(m_MimeType);
-    QDataStream stream(&encodedData, QIODevice::ReadOnly);
-    QList<Person> personItems;
-    while (!stream.atEnd()) {
-        QVariant data[4];
-        for(int i = 0; i < 4; ++i)
-            stream >> data[i];
-        personItems << Person(data[0].toString(), data[1].toInt(),
-                              data[2].toBool(),m_Items.indexOf(data[3].toString()));
-    }
-    //
-    int beginRow = 0;
-    if (row != -1)
-        // drop перед элементом <<row>>
-        beginRow = row;
-    else if (parent.isValid())
+    QByteArray encodedData = mimeData->data(m_MimeType);
+    QXmlStreamReader reader(encodedData);    
+    if (row == -1)
         // drop в дочерние <<parent>>
-        beginRow = parent.row();
-    else
-        beginRow = rootItem->childCount();
-    // вставка в соответствующий индекс
-    beginInsertRows(parent,beginRow,beginRow + personItems.count() - 1);
-    foreach (const Person &rcPerson, personItems) {
-        parentItem->addChild(new TreeItem(rcPerson),beginRow);
-        ++beginRow;
-    }
+        row = parent.isValid() ? parent.row() : rootItem->childCount();
+    // вставка в соответствующую позицию
+    beginInsertRows(parent,row,row);
+    TreeItem::deserialize(&reader,parentItem,row);
     endInsertRows();
     return true;
  }

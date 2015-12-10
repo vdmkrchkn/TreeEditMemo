@@ -14,7 +14,7 @@ class TreeModel : public QAbstractItemModel
      // возвращает список элементов перечислимого типа
      const QStringList &getItemNames() const;
      // возвращает элемент данных, соответствующий модельному индексу `index`
-     virtual QVariant data(const QModelIndex &index, int role) const;
+     virtual QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
      // редактирование элемента модели
      virtual bool setData(const QModelIndex &index, const QVariant &value,
                           int role = Qt::EditRole);
@@ -27,7 +27,7 @@ class TreeModel : public QAbstractItemModel
      // возвращает сериализованные данные в форматe MIME
      virtual QMimeData *mimeData(const QModelIndexList & indexes) const;
      // drop данных в позицию, соответствующую (`row`, `column`,`parent`)
-     virtual bool dropMimeData(const QMimeData *data, Qt::DropAction action,
+     virtual bool dropMimeData(const QMimeData *mimeData, Qt::DropAction action,
                        int row, int column, const QModelIndex &parent);
      // возвращает данные заголовка
      virtual QVariant headerData(int section, Qt::Orientation orientation,
@@ -56,7 +56,7 @@ class TreeModel : public QAbstractItemModel
      TreeItem *rootItem;     
      // список элементов перечислимого типа
      QStringList m_Items;
-     //
+     // тип MIME для сериализации
      QString m_MimeType;
  };
 
