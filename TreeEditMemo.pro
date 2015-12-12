@@ -35,7 +35,6 @@ exists(../ModelTest/modeltest.pri){
 	include(../ModelTest/modeltest.pri)
 }
 
-RESOURCES += \
-    TreeEditMemo.qrc
+RESOURCES +=
 
 TRANSLATIONS += translations/TreeEditMemo_ru_RU.ts
